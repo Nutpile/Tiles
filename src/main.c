@@ -36,8 +36,9 @@ uint8_t initGame(uint8_t difficulty)
     //split square of size "size" in difficulty+3 parts since a 3x3 grid is the smallest it can be
     for(uint8_t i = 0; i<difficulty+4; i++){
         gfx_VertLine_NoClip(size/(difficulty+3)*i+spacing, spacing, size);
-        gfx_HorizLine_NoClip(spacing, size/(difficulty+3)*i+spacing, size+1);
+        gfx_HorizLine_NoClip(spacing, size/(difficulty+3)*i+spacing, size);
     }
+    if(difficulty != 0) gfx_SetPixel(size+spacing, size+spacing); //this is here to fix a missing pixel
     return size/(difficulty+3);
 }
 
@@ -48,6 +49,67 @@ void drawTile(uint8_t cellSize, uint8_t difficulty, uint8_t gameGrid[][difficult
 
     //attention! the + 11 is the value of "spacing" from initGame() + 1
     gfx_FillRectangle_NoClip(coloumn * cellSize + 11,row * cellSize + 11,cellSize-1,cellSize-1);
+}
+
+void select(uint8_t cellSize)
+{
+    bool quit = false;
+    int8_t deltaX = 0;
+    int8_t deltaY = 0;
+    uint8_t selectionX = 10;
+    uint8_t selectionY = 10;
+    uint8_t OLDselectionX = selectionX;
+    uint8_t OLDselectionY = selectionY;
+
+    // Draw first selection
+    gfx_SetColor(224);
+    gfx_Rectangle_NoClip(selectionX, selectionY, cellSize+1, cellSize+1);
+
+    while (!quit)
+    {
+        uint8_t key = os_GetCSC();
+        if (key) // execute only if a key is pressed
+        {
+            switch (key)
+            {
+                case sk_Down: deltaX = 0; deltaY = cellSize; break;
+                case sk_Up: deltaX = 0; deltaY = -cellSize; break;
+                case sk_Left: deltaX = -cellSize; deltaY = 0; break;
+                case sk_Right: deltaX = cellSize; deltaY = 0; break;
+                case sk_Clear: quit = true; continue; // Exit the loop
+                default: deltaX = 0; deltaY = 0; break;
+            }
+
+            // check bounds
+            int16_t NEWSelectionY = selectionY + deltaY;
+            int16_t NEWSelectionX = selectionX + deltaX;
+
+            //the horror below is the only way my dumb ahh could code boundary detection
+            if (NEWSelectionX >= 10 && NEWSelectionX < 220 && NEWSelectionY >= 10 && NEWSelectionY < 220) {
+                // remove old selection
+                gfx_SetColor(0); // black
+                gfx_Rectangle_NoClip(OLDselectionX, OLDselectionY, cellSize + 1, cellSize + 1);
+
+                // update selection coords
+                selectionX = NEWSelectionX;
+                selectionY = NEWSelectionY;
+
+                // draw new selection
+                gfx_SetColor(224); // Red selection
+                gfx_Rectangle_NoClip(selectionX, selectionY, cellSize + 1, cellSize + 1);
+
+                // update old position
+                OLDselectionX = selectionX;
+                OLDselectionY = selectionY;
+            }
+            else
+            {
+                // revert to old position if out of bounds
+                selectionX = OLDselectionX;
+                selectionY = OLDselectionY;
+            }
+        }
+    }
 }
 
 
@@ -66,7 +128,7 @@ int main(void)
             drawTile(cellSize, difficulty, gameGrid, i, j);
         }
     }
-    while(!os_GetCSC());
+    select(cellSize);
     gfx_End();
     return 0;
 }
