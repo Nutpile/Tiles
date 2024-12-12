@@ -30,12 +30,30 @@ static uint8_t gameGrid[MAX_GAME_SIZE][MAX_GAME_SIZE];
 
 // remember screen dimentions is 320x240
 
+static uint8_t cellSize = 0;
 static uint8_t difficulty = 0; // 0 is 3x3, 1 is 4x4, and 2 is 5x5, causes problems if set to over 2 for some reason
 const uint8_t spacing = 10; //spacing in pixels from the screen borders
 const uint8_t size = 220; // size of the grid, most of the cases do not touch
 
+void drawTile(uint8_t cellSize, uint8_t row, uint8_t column)
+{
+    if (gameGrid[row][column] == 1) gfx_SetColor(24); // blue
+    else gfx_SetColor(230); // yellow
+
+    gfx_FillRectangle_NoClip(column * cellSize + spacing + 1,row * cellSize + spacing + 1,cellSize-1,cellSize-1);
+}
+
 uint8_t initGame()
 {
+    gfx_FillScreen(255);
+    for(uint8_t i = 0; i < difficulty+3; i++)
+    {
+        for(uint8_t j = 0; j < difficulty+3; j++)
+        {
+            gameGrid[i][j] = rand() % 2; // Use % 2 to generate 0 or 1
+            drawTile(size/(difficulty+3), i, j);
+        }
+    }
     gfx_SetColor(0);
     //split square of size "size" in difficulty+3 parts since a 3x3 grid is the smallest it can be
     for(uint8_t i = 0; i<difficulty+4; i++){
@@ -44,14 +62,6 @@ uint8_t initGame()
     }
     if(difficulty != 0) gfx_SetPixel(size+spacing, size+spacing); //this is here to fix a missing pixel
     return size/(difficulty+3);
-}
-
-void drawTile(uint8_t cellSize, uint8_t row, uint8_t column)
-{
-    if (gameGrid[row][column] == 1) gfx_SetColor(24); // blue
-    else gfx_SetColor(230); // yellow
-
-    gfx_FillRectangle_NoClip(column * cellSize + spacing + 1,row * cellSize + spacing + 1,cellSize-1,cellSize-1);
 }
 
 bool checkWin(void){
@@ -112,11 +122,15 @@ void select(uint8_t cellSize)
         {
             switch (key)
             {
-                case sk_Enter: clicked = true; break;
+                case sk_2nd: clicked = true; break;
                 case sk_Down: deltaX = 0; deltaY = 1; break;
                 case sk_Up: deltaX = 0; deltaY = -1; break;
                 case sk_Left: deltaX = -1; deltaY = 0; break;
                 case sk_Right: deltaX = 1; deltaY = 0; break;
+                //the cases below are a temporary way to change difficulty without rebuildiing
+                case sk_2: selectionX = 0; selectionY = 0; difficulty = 1; OLDselectionX = selectionX; OLDselectionY = selectionY; cellSize = initGame();; break;
+                case sk_3: selectionX = 0; selectionY = 0; difficulty = 2; OLDselectionX = selectionX; OLDselectionY = selectionY; cellSize = initGame();; break;
+                case sk_1: selectionX = 0; selectionY = 0; difficulty = 0; OLDselectionX = selectionX; OLDselectionY = selectionY; cellSize = initGame();; break;
                 case sk_Clear: quit = true; break; // Exit the loop
                 default: deltaX = 0; deltaY = 0; break;
             }
@@ -162,15 +176,7 @@ int main(void)
 {
     srand(rtc_Time());
     gfx_Begin();
-    uint8_t cellSize = initGame();
-    for(uint8_t i = 0; i < difficulty+3; i++)
-    {
-        for(uint8_t j = 0; j < difficulty+3; j++)
-        {
-            gameGrid[i][j] = rand() % 2; // Use % 2 to generate 0 or 1
-            drawTile(cellSize, i, j);
-        }
-    }
+    cellSize = initGame();
     select(cellSize);
     gfx_End();
     return 0;
