@@ -26,11 +26,11 @@ SOFTWARE.*/
 #include <sys\rtc.h> //see above
 
 #define MAX_GAME_SIZE 5
-uint8_t gameGrid[MAX_GAME_SIZE][MAX_GAME_SIZE];
+static uint8_t gameGrid[MAX_GAME_SIZE][MAX_GAME_SIZE];
 
 // remember screen dimentions is 320x240
 
-uint8_t difficulty = 1; // 0 is 3x3, 1 is 4x4, and 2 is 5x5, causes problems if set to over 2 for some reason
+static uint8_t difficulty = 0; // 0 is 3x3, 1 is 4x4, and 2 is 5x5, causes problems if set to over 2 for some reason
 const uint8_t spacing = 10; //spacing in pixels from the screen borders
 const uint8_t size = 220; // size of the grid, most of the cases do not touch
 
@@ -54,12 +54,22 @@ void drawTile(uint8_t cellSize, uint8_t row, uint8_t column)
     gfx_FillRectangle_NoClip(column * cellSize + spacing + 1,row * cellSize + spacing + 1,cellSize-1,cellSize-1);
 }
 
-void click(uint8_t row, uint8_t column, uint8_t cellSize)
+bool checkWin(void){
+    uint8_t symbol = gameGrid[0][0];
+    for(uint8_t i=0; i<difficulty+3; i++){
+        for(uint8_t j=0; j<difficulty+3; j++){
+            if(symbol != gameGrid[i][j]) return false;
+            symbol = gameGrid[i][j];
+        }
+    }
+    return true;
+}
+
+bool click(uint8_t row, uint8_t column, uint8_t cellSize)
 {
     //invert current tile, no if condition here since it's always possible
     gameGrid[row][column] = !gameGrid[row][column];
     drawTile(cellSize, row, column);
-
     //check and invert adjacient tiles
     if(column+1<difficulty+3){
         gameGrid[row][column+1] = !gameGrid[row][column+1];
@@ -77,6 +87,7 @@ void click(uint8_t row, uint8_t column, uint8_t cellSize)
         gameGrid[row-1][column] = !gameGrid[row-1][column];
         drawTile(cellSize, row-1, column);
     }
+    return checkWin();
 }
 
 void select(uint8_t cellSize)
@@ -110,7 +121,7 @@ void select(uint8_t cellSize)
                 default: deltaX = 0; deltaY = 0; break;
             }
 
-            if (clicked) click(selectionY, selectionX, cellSize);
+            if (clicked) quit = click(selectionY, selectionX, cellSize);
 
             // check bounds
             uint8_t NEWSelectionY = selectionY + deltaY;
