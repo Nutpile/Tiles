@@ -27,6 +27,7 @@ SOFTWARE.*/
 
 #define MAX_GAME_SIZE 5
 static uint8_t gameGrid[MAX_GAME_SIZE][MAX_GAME_SIZE];
+unsigned int moves = 0;
 
 // remember screen dimentions is 320x240
 
@@ -43,9 +44,36 @@ void drawTile(uint8_t cellSize, uint8_t row, uint8_t column)
     gfx_FillRectangle_NoClip(column * cellSize + spacing + 1,row * cellSize + spacing + 1,cellSize-1,cellSize-1);
 }
 
+void drawSideBar(void)
+{
+    gfx_SetDrawBuffer();
+    const int Xpos = 2*spacing+size;
+    const uint8_t width = GFX_LCD_WIDTH-size-3*spacing;
+    const uint8_t height = GFX_LCD_HEIGHT-2*spacing;
+
+    gfx_SetColor(255);
+    gfx_SetTextXY(Xpos+width/6, 2*spacing);
+    gfx_FillRectangle_NoClip(Xpos, 2*spacing, width-1, 15);  //move counter
+    gfx_SetColor(0);
+    gfx_Rectangle_NoClip(Xpos, spacing, width, height); //border
+    gfx_SetTextScale(2,2);
+    gfx_PrintUInt(moves, 3);
+
+    gfx_SetTextScale(1,1);
+    gfx_PrintStringXY("[clear]", Xpos+1.2*spacing, GFX_LCD_HEIGHT-3*spacing);
+    gfx_PrintStringXY("-quit-", Xpos+1.2*spacing+2, GFX_LCD_HEIGHT-2*spacing);
+
+    gfx_BlitRectangle(gfx_buffer, Xpos, spacing, width, height);
+
+    gfx_SetDrawScreen();
+}
+
 uint8_t initGame()
 {
     gfx_FillScreen(255);
+    moves = 0;
+    drawSideBar();
+    gfx_SetDrawBuffer();
     for(uint8_t i = 0; i < difficulty+3; i++)
     {
         for(uint8_t j = 0; j < difficulty+3; j++)
@@ -61,6 +89,8 @@ uint8_t initGame()
         gfx_HorizLine_NoClip(spacing, size/(difficulty+3)*i+spacing, size);
     }
     if(difficulty != 0) gfx_SetPixel(size+spacing, size+spacing); //this is here to fix a missing pixel
+    gfx_BlitRectangle(gfx_buffer, spacing, spacing, size+1, size+1);
+    gfx_SetDrawScreen();
     return size/(difficulty+3);
 }
 
@@ -77,6 +107,9 @@ bool checkWin(void){
 
 bool click(uint8_t row, uint8_t column, uint8_t cellSize)
 {
+    moves++;
+    if(moves > 999) moves=0;
+    drawSideBar();
     //invert current tile, no if condition here since it's always possible
     gameGrid[row][column] = !gameGrid[row][column];
     drawTile(cellSize, row, column);
@@ -177,6 +210,7 @@ int main(void)
     srand(rtc_Time());
     gfx_Begin();
     cellSize = initGame();
+    drawSideBar();
     select(cellSize);
     gfx_End();
     return 0;
