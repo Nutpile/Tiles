@@ -53,7 +53,7 @@ void drawSideBar(void)
 
     gfx_SetColor(255);
     gfx_SetTextXY(Xpos+width/6, 2*spacing);
-    gfx_FillRectangle_NoClip(Xpos, 2*spacing, width-1, 15);  //move counter
+    gfx_FillRectangle_NoClip(Xpos, 2*spacing, width-1, 27);  //move counter
     gfx_SetColor(0);
     gfx_Rectangle_NoClip(Xpos, spacing, width, height); //border
     gfx_SetTextScale(2,2);
@@ -63,13 +63,19 @@ void drawSideBar(void)
     gfx_PrintStringXY("[clear]", Xpos+1.2*spacing, GFX_LCD_HEIGHT-3*spacing);
     gfx_PrintStringXY("-quit-", Xpos+1.2*spacing+2, GFX_LCD_HEIGHT-2*spacing);
 
+    gfx_SetTextXY(Xpos+width/3, 4*spacing);
+    gfx_PrintUInt(difficulty+3, 1);
+    gfx_PrintChar('x');
+    gfx_PrintUInt(difficulty+3, 1);
+
     gfx_BlitRectangle(gfx_buffer, Xpos, spacing, width, height);
 
     gfx_SetDrawScreen();
 }
 
-uint8_t initGame()
+void initGame()
 {
+    cellSize = size/(difficulty+3);
     gfx_FillScreen(255);
     moves = 0;
     drawSideBar();
@@ -79,19 +85,24 @@ uint8_t initGame()
         for(uint8_t j = 0; j < difficulty+3; j++)
         {
             gameGrid[i][j] = rand() % 2; // Use % 2 to generate 0 or 1
-            drawTile(size/(difficulty+3), i, j);
+            drawTile(cellSize, i, j);
         }
     }
     gfx_SetColor(0);
     //split square of size "size" in difficulty+3 parts since a 3x3 grid is the smallest it can be
     for(uint8_t i = 0; i<difficulty+4; i++){
-        gfx_VertLine_NoClip(size/(difficulty+3)*i+spacing, spacing, size);
-        gfx_HorizLine_NoClip(spacing, size/(difficulty+3)*i+spacing, size);
+        gfx_VertLine_NoClip(cellSize*i+spacing, spacing, size);
+        gfx_HorizLine_NoClip(spacing, cellSize*i+spacing, size);
     }
-    if(difficulty != 0) gfx_SetPixel(size+spacing, size+spacing); //this is here to fix a missing pixel
-    gfx_BlitRectangle(gfx_buffer, spacing, spacing, size+1, size+1);
+    if(difficulty != 0){
+        gfx_SetPixel(size+spacing, size+spacing); //this is here to fix a missing pixel
+        gfx_BlitRectangle(gfx_buffer, spacing, spacing, size+1, size+1);
+        gfx_SetDrawScreen();       //kind of a shame that i have to execute the same code twice
+        return;//but i have to since non-3x3s are 1 pixel larger for some reason
+    }
+    gfx_BlitRectangle(gfx_buffer, spacing, spacing, size, size);
     gfx_SetDrawScreen();
-    return size/(difficulty+3);
+    return;
 }
 
 bool checkWin(void){
@@ -133,7 +144,7 @@ bool click(uint8_t row, uint8_t column, uint8_t cellSize)
     return checkWin();
 }
 
-void select(uint8_t cellSize)
+void select()
 {
     bool quit = false;
     int8_t deltaX = 0;
@@ -209,9 +220,9 @@ int main(void)
 {
     srand(rtc_Time());
     gfx_Begin();
-    cellSize = initGame();
+    initGame();
     drawSideBar();
-    select(cellSize);
+    select();
     gfx_End();
     return 0;
 }
