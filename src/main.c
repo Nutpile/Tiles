@@ -24,6 +24,8 @@ SOFTWARE.*/
 #include <ti\getcsc.h>  //keypad input
 #include <stdlib.h> //for random tile generation
 #include <sys\rtc.h> //see above
+#include <gfx\gfx.h> //for logo
+#include <stdlib.h> // for exit()
 
 #define MAX_GAME_SIZE 5
 static uint8_t gameGrid[MAX_GAME_SIZE][MAX_GAME_SIZE];
@@ -36,7 +38,9 @@ static uint8_t difficulty = 0; // 0 is 3x3, 1 is 4x4, and 2 is 5x5, causes probl
 const uint8_t spacing = 10; //spacing in pixels from the screen borders
 const uint8_t size = 220; // size of the grid, most of the cases do not touch
 
-void drawTile(uint8_t cellSize, uint8_t row, uint8_t column)
+void Menu(void);
+
+void drawTile(uint8_t row, uint8_t column)
 {
     if (gameGrid[row][column] == 1) gfx_SetColor(24); // blue
     else gfx_SetColor(230); // yellow
@@ -73,7 +77,7 @@ void drawSideBar(void)
     gfx_SetDrawScreen();
 }
 
-void initGame()
+void initGame(void)
 {
     cellSize = size/(difficulty+3);
     gfx_FillScreen(255);
@@ -85,7 +89,7 @@ void initGame()
         for(uint8_t j = 0; j < difficulty+3; j++)
         {
             gameGrid[i][j] = rand() % 2; // Use % 2 to generate 0 or 1
-            drawTile(cellSize, i, j);
+            drawTile(i, j);
         }
     }
     gfx_SetColor(0);
@@ -116,35 +120,35 @@ bool checkWin(void){
     return true;
 }
 
-bool click(uint8_t row, uint8_t column, uint8_t cellSize)
+bool click(uint8_t row, uint8_t column)
 {
     moves++;
     if(moves > 999) moves=0;
     drawSideBar();
     //invert current tile, no if condition here since it's always possible
     gameGrid[row][column] = !gameGrid[row][column];
-    drawTile(cellSize, row, column);
+    drawTile(row, column);
     //check and invert adjacient tiles
     if(column+1<difficulty+3){
         gameGrid[row][column+1] = !gameGrid[row][column+1];
-        drawTile(cellSize, row, column+1);
+        drawTile(row, column+1);
     }
     if(column > 0){
         gameGrid[row][column-1] = !gameGrid[row][column-1];
-        drawTile(cellSize, row, column-1);
+        drawTile(row, column-1);
     }
     if(row+1<difficulty+3){
         gameGrid[row+1][column] = !gameGrid[row+1][column];
-        drawTile(cellSize, row+1, column);
+        drawTile(row+1, column);
     }
     if(row > 0){
         gameGrid[row-1][column] = !gameGrid[row-1][column];
-        drawTile(cellSize, row-1, column);
+        drawTile(row-1, column);
     }
     return checkWin();
 }
 
-void select()
+void select(void)
 {
     bool quit = false;
     int8_t deltaX = 0;
@@ -179,7 +183,7 @@ void select()
                 default: deltaX = 0; deltaY = 0; break;
             }
 
-            if (clicked) quit = click(selectionY, selectionX, cellSize);
+            if (clicked) quit = click(selectionY, selectionX);
 
             // check bounds
             uint8_t NEWSelectionY = selectionY + deltaY;
@@ -214,15 +218,49 @@ void select()
             }
         }
     }
+    Menu();
 }
+
+void Menu(void)
+{
+    gfx_SetDrawBuffer();
+    gfx_FillScreen(255);
+    gfx_SetPalette(global_palette, sizeof_global_palette, 0);
+    gfx_TransparentSprite_NoClip(logo, GFX_LCD_WIDTH / 2 - 100, 50);
+    gfx_BlitBuffer();
+    gfx_SetDrawScreen();
+
+    while (true)
+    {
+        uint8_t key = os_GetCSC(); // Get key input
+        if(key){
+            if(key == sk_Clear){
+                gfx_End();
+                exit(0);
+                return;
+            }
+            else{
+                gfx_SetDefaultPalette(1);
+                gfx_SetDrawBuffer();
+                gfx_FillScreen(255);
+                gfx_SetDrawScreen();
+
+                initGame();
+                drawSideBar();
+                select();
+                return;
+            }
+        }
+        // If no key is pressed, gamestate remains 0
+    }
+}
+
 
 int main(void)
 {
     srand(rtc_Time());
     gfx_Begin();
-    initGame();
-    drawSideBar();
-    select();
+    Menu();
     gfx_End();
     return 0;
 }
