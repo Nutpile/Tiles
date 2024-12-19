@@ -34,7 +34,7 @@ unsigned int moves = 0;
 // remember screen dimentions is 320x240
 
 static uint8_t cellSize = 0;
-static uint8_t difficulty = 0; // 0 is 3x3, 1 is 4x4, and 2 is 5x5, causes problems if set to over 2 for some reason
+static int8_t difficulty = 0; // 0 is 3x3, 1 is 4x4, and 2 is 5x5, causes problems if set to over 2 for some reason
 const uint8_t spacing = 10; //spacing in pixels from the screen borders
 const uint8_t size = 220; // size of the grid, most of the cases do not touch
 
@@ -58,7 +58,7 @@ void drawSideBar(void)
     gfx_SetColor(255);
     gfx_SetTextXY(Xpos+width/6, 2*spacing);
     gfx_FillRectangle_NoClip(Xpos, 2*spacing, width-1, 27);  //move counter
-    gfx_SetColor(0);
+    gfx_SetColor(2);
     gfx_Rectangle_NoClip(Xpos, spacing, width, height); //border
     gfx_SetTextScale(2,2);
     gfx_PrintUInt(moves, 3);
@@ -92,7 +92,7 @@ void initGame(void)
             drawTile(i, j);
         }
     }
-    gfx_SetColor(0);
+    gfx_SetColor(2);
     //split square of size "size" in difficulty+3 parts since a 3x3 grid is the smallest it can be
     for(uint8_t i = 0; i<difficulty+4; i++){
         gfx_VertLine_NoClip(cellSize*i+spacing, spacing, size);
@@ -101,15 +101,15 @@ void initGame(void)
     if(difficulty != 0){
         gfx_SetPixel(size+spacing, size+spacing); //this is here to fix a missing pixel
         gfx_BlitRectangle(gfx_buffer, spacing, spacing, size+1, size+1);
-        gfx_SetDrawScreen();       //kind of a shame that i have to execute the same code twice
-        return;//but i have to since non-3x3s are 1 pixel larger for some reason
+        gfx_SetDrawScreen();    //kind of a shame that i have to execute the same code twice
+        return;                 //but i have to since non-3x3s are 1 pixel larger for some reason
     }
     gfx_BlitRectangle(gfx_buffer, spacing, spacing, size, size);
     gfx_SetDrawScreen();
     return;
-}
+    }
 
-bool checkWin(void){
+    bool checkWin(void){
     uint8_t symbol = gameGrid[0][0];
     for(uint8_t i=0; i<difficulty+3; i++){
         for(uint8_t j=0; j<difficulty+3; j++){
@@ -195,7 +195,7 @@ void select(void)
             //the horror below is the only way my dumb ahh could code boundary detection
             if (NEWSelectionX >= 0 && NEWSelectionX < difficulty+3 && NEWSelectionY >= 0 && NEWSelectionY < difficulty+3) {
                 // remove old selection
-                gfx_SetColor(0); // black
+                gfx_SetColor(2); // black
                 gfx_Rectangle_NoClip(OLDselectionX*cellSize+spacing, OLDselectionY*cellSize+spacing, cellSize + 1, cellSize + 1);
 
                 // update selection coords
@@ -227,20 +227,46 @@ void Menu(void)
     gfx_FillScreen(255);
     gfx_SetPalette(global_palette, sizeof_global_palette, 0);
     gfx_TransparentSprite_NoClip(logo, GFX_LCD_WIDTH / 2 - 100, 50);
+    gfx_SetTextFGColor(2);
+    gfx_PrintStringXY("Easy", 140, 150);
+    gfx_PrintStringXY("Medium", 140, 165);
+    gfx_PrintStringXY("Hard", 140, 180);
     gfx_BlitBuffer();
     gfx_SetDrawScreen();
 
     while (true)
     {
+        bool start = false;
         uint8_t key = os_GetCSC(); // Get key input
+        gfx_PrintStringXY(">", 130, 150+difficulty*15);
         if(key){
-            if(key == sk_Clear){
+
+            switch (key)
+            {
+            case sk_Clear:
                 gfx_End();
                 exit(0);
-                return;
+            case sk_Down:
+                difficulty++;
+                break;
+            case sk_Up:
+                difficulty--;
+                break;
+            case sk_2nd:
+                start = true;
+                break;
+            default:
+                break;
             }
-            else{
-                gfx_SetDefaultPalette(1);
+            
+            if(difficulty > 2) difficulty = 0;
+            else if(difficulty < 0) difficulty = 2;
+
+            gfx_SetColor(1);
+            gfx_FillRectangle_NoClip(130, 150, 5, 37);
+            gfx_PrintStringXY(">", 130, 150+difficulty*15);
+
+            if(start){
                 gfx_SetDrawBuffer();
                 gfx_FillScreen(255);
                 gfx_SetDrawScreen();
@@ -248,7 +274,6 @@ void Menu(void)
                 initGame();
                 drawSideBar();
                 select();
-                return;
             }
         }
         // If no key is pressed, gamestate remains 0
