@@ -1,4 +1,4 @@
-Tiles!
+![image](./src/gfx/logo.png)
 ==========
 Tiles! is a simple game where your goal is to set all tiles to one colour in the
 least amount of moves, but changing a tile also switches the adjacient ones.
