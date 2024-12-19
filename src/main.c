@@ -175,10 +175,6 @@ void select(void)
                 case sk_Up: deltaX = 0; deltaY = -1; break;
                 case sk_Left: deltaX = -1; deltaY = 0; break;
                 case sk_Right: deltaX = 1; deltaY = 0; break;
-                //the cases below are a temporary way to change difficulty without rebuildiing
-                case sk_2: selectionX = 0; selectionY = 0; difficulty = 1; OLDselectionX = selectionX; OLDselectionY = selectionY; initGame(); break;
-                case sk_3: selectionX = 0; selectionY = 0; difficulty = 2; OLDselectionX = selectionX; OLDselectionY = selectionY; initGame(); break;
-                case sk_1: selectionX = 0; selectionY = 0; difficulty = 0; OLDselectionX = selectionX; OLDselectionY = selectionY; initGame(); break;
                 case sk_Clear: quit = true; break; // Exit the loop
                 default: deltaX = 0; deltaY = 0; break;
             }
