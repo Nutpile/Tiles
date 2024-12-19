@@ -2,9 +2,9 @@
 # Makefile Options
 # ----------------------------
 
-NAME = PROGRAM
+NAME = TILES
 ICON = icon.png
-DESCRIPTION = "C Program by Nutpile"
+DESCRIPTION = "Tiles! a game by Nutpile"
 COMPRESSED = YES
 COMPRESSED_MODE = zx0
 

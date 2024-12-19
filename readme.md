@@ -6,6 +6,10 @@ least amount of moves, but changing a tile also switches the adjacient ones.
 coded by Valerio "Nutpile" Casalino, this is still a very heavy work in progress,  
 and it will be for a bit of time! so hold on while i work.
 
+# How does it look?
+![gameplay_image](./gameplay.gif)\
+*note that any lag and/or screen tearing is an effect of the emulator, and does not happen on real hardware*
+
 # Contribution
 If you'd like to contribute feel free to fork this repo and make a pull request,  
 where you describe what you contributed to (especially optimization PRs will be  
@@ -18,6 +22,6 @@ also you can join the [CE Programming](https://discord.gg/BfKYJa4BVv) discord
 server, i frequently ask dumb questions there and you can also help other people
 
 # Source code
-available [here](https://github.com/Nutpile/Tiles/blob/5b1cc4c2e3ebc4d5177d880b715d8f8e79c5aba6/src/main.c) *still a work in progress!*  
+Available [here](https://github.com/Nutpile/Tiles/blob/5b1cc4c2e3ebc4d5177d880b715d8f8e79c5aba6/src/main.c)
 
 2024 Valerio "Nutpile" Casalino
